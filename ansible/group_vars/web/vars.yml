@@ -1,0 +1,12 @@
+---
+nginx_package: nginx
+
+web_root: /var/www/iac-site
+
+web_server_name: _
+
+web_port: 80
+
+web_site_title: "Projet DevOps - Infrastructure as Code"
+
+web_admin_user: admin

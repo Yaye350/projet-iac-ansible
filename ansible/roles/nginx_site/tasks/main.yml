@@ -1,0 +1,72 @@
+---
+- name: Mettre a jour le cache APT
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Installer Nginx
+  ansible.builtin.apt:
+    name: "{{ nginx_package }}"
+    state: present
+
+- name: Creer le repertoire du site
+  ansible.builtin.file:
+    path: "{{ web_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Creer le repertoire prive
+  ansible.builtin.file:
+    path: "{{ web_root }}/private"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Copier la page HTML
+  ansible.builtin.copy:
+    src: index.html
+    dest: "{{ web_root }}/index.html"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Creer la page privee
+  ansible.builtin.copy:
+    content: "<h1>Espace prive du projet DevOps</h1>"
+    dest: "{{ web_root }}/private/index.html"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Deployer le fichier des identifiants Nginx
+  ansible.builtin.copy:
+    content: "{{ web_admin_user }}:{{ nginx_basic_auth_hash }}\n"
+    dest: /etc/nginx/.htpasswd
+    owner: root
+    group: www-data
+    mode: '0640'
+  no_log: true
+  notify: Recharger Nginx
+
+- name: Configurer le virtual host Nginx
+  ansible.builtin.template:
+    src: default.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Recharger Nginx
+
+- name: Activer Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Verifier la configuration Nginx
+  ansible.builtin.command:
+    cmd: nginx -t
+  changed_when: false

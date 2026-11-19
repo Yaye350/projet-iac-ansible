@@ -1,0 +1,11 @@
+.vagrant/
+*.log
+*.retry
+
+# Secrets
+vault-password
+vault-pass.txt
+
+# Fichiers temporaires
+*.tmp
+.DS_Store

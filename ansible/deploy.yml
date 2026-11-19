@@ -1,0 +1,31 @@
+
+---
+- name: Deployer un site web avec Nginx
+  hosts: web
+  become: true
+
+  tasks:
+
+    - name: Mettre a jour le cache APT
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Installer Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Demarrer et activer Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Copier le site web
+      ansible.builtin.copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
