@@ -1,0 +1,47 @@
+
+name: Deploy website with Ansible
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, iac-local]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Ansible
+        run: ansible --version
+
+      - name: Check playbook syntax
+        run: |
+          cd ansible
+          ansible-playbook --syntax-check site.yml
+
+      - name: Deploy website
+        env:
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+        run: |
+          set -e
+          cd ansible
+
+          VAULT_FILE="$RUNNER_TEMP/vault-pass"
+          trap 'rm -f "$VAULT_FILE"' EXIT
+
+          printf '%s' "$VAULT_PASSWORD" > "$VAULT_FILE"
+          chmod 600 "$VAULT_FILE"
+
+          ansible-playbook site.yml \
+            --vault-password-file "$VAULT_FILE"
+
+      - name: Verify deployment
+        run: |
+          cd ansible
+          ansible-playbook verify.yml \
+            --vault-password-file "$RUNNER_TEMP/vault-pass"
